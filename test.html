@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>Station</title>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+        <!--socket.io官網是要求這麼引入的-->
+        <script src="/socket.io/socket.io.js"></script>
+    </head>
+    
+    <body>
+        <div class="container">
+            <h2>TEST</h2>
+            <script type"text/javascript">
+                var socket = io.connect('/');
+                socket.on('connected', ()=>{
+                    alert("Socket.io is connected !");
+                });
+            </script>
+        </div>
+    </body>
+</html>
