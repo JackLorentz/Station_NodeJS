@@ -1,18 +1,32 @@
+var express = require('express');
+var router = express.Router();
 var crypto = require('crypto');//建立散列值來加密
+var message;
 User = require('../models/user.js');
 
-module.exports = (app)=>{
+module.exports = (app, io) => {
     app.get('/', (req, res)=>{
         res.render('index', {
-            title: 'Station-Login'
+            title: 'Station'
         });
     })
-
+    
+    app.get('/reg', (req, res)=>{
+        res.render('reg', {
+            title: 'Register'
+        });
+    })
+    
     app.post('/reg', (req, res)=>{
-        var usr = req.body.user,
-            pwd = req.body.pwd;
+        var name = req.body.name,
+            pwd = req.body.pwd,
+            pwd_re = req.body['pwd-re'];
+        if(pwd != pwd_re){
+            req.flash('error', '兩次輸入不一樣!');
+            return res.redirect('/reg');
+        }
         //建立密碼md5值
-        var md5 = crypto.createHash('md5');
+        var md5 = crypto.createHash('md5'),
             pwd = md5.update(req.body.pwd).digest('hex');
         var newUser = new User({
             name: req.body.name,
@@ -25,25 +39,61 @@ module.exports = (app)=>{
                 return res.redirect('/reg');
             }
             //若不存在則新增用戶
-            newUser.save((err, user)=>{
+            newUser.save(newUser, (err, user)=>{
                 if(err){
                     req.flash('error', err);
                 }
                 //用戶資訊存入session
                 req.session.user = user;
-                req.flash('success', '註冊成功!');
+                req.flash('info', '註冊成功!');
                 res.redirect('/');
             });
         });
     })
-
-    app.get('/post', (req, res)=>{
-        res.render('post', {
+    
+    app.get('/login', (req, res)=>{
+        res.render('login', {
+            title: 'Login'
+        });
+    })
+    
+    app.post('/login', (req, res)=>{
+        var name = req.body.name,
+            md5 = crypto.createHash('md5'),
+            pwd = md5.update(req.body.pwd).digest('hex');
+        //
+        User.get(req.body.name, (err, user)=>{
+            if(!user){
+                console.log("error: 用戶不存在");
+                req.flash('error', '用戶不存在');
+                io.sockets.on('connection', (socket)=>{
+                    socket.emit('login_alert', 'error: 用戶不存在');
+                });
+                return res.redirect('/login');
+            }
+            if(user.password != pwd){
+                console.log("error: 密碼錯誤");
+                req.flash('error', '密碼錯誤');
+                io.sockets.on('connection', (socket)=>{
+                    socket.emit('login_alert', 'error: 密碼錯誤');
+                });
+                return res.redirect('/login');
+            }
+            req.session.user = user;
+            req.flash('info', '登錄成功!');
+            io.sockets.on('connection', (socket)=>{
+                socket.emit('login_alert', 'success: 登錄成功 !');
+            });
+            res.redirect('/home');
+        })
+    
+    })
+    
+    app.get('/logout', (req, res)=>{})
+    
+    app.get('/home', (req, res)=>{
+        res.render('home', {
             title: 'Home'
         });
     })
-
-    app.post('/post', (req, res)=>{})
-
-    app.get('/logout', (req, res)=>{})
-}
+};

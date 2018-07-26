@@ -1,8 +1,32 @@
-var setting  = require('../settings'),
-    db = require('mongodb').Db,
-    conn = require('mongodb').Connection,
-    server = require('mongodb').Server;
-    module.exports = new Db(settings.db, new Server(settings.host, settings.port), {
-        safe: true
+var mongoClient = require('mongodb').MongoClient;
+var url = "mongodb://localhost:27017/";
+var dBname = "station";
+
+function DB(){};
+
+module.exports = DB; 
+
+DB.createDB = () =>{
+    finalURL = url + dBname;
+    mongoClient.connect(finalURL, (err, db)=>{
+        if(err) throw err;
+        console.log("Database created!");
+        db.close();
     });
+}
+
+DB.createCollection = (name) => {
+    mongoClient.connect(url, (err, db)=>{
+        if(err) throw err;
+        var dbo = db.db("station");
+        dbo.createCollection(name, (err, res) => {
+            if(err) throw err;
+            console.log("Collection created!");
+            db.close();
+        })
+    });
+}
+
+createDB();
+createCollection("accounts");
 
