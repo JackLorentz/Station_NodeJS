@@ -10,6 +10,34 @@ module.exports = (app, io) => {
             title: 'Station'
         });
     })
+
+    app.post('/', (req, res)=>{
+        var name = req.body.name,
+            md5 = crypto.createHash('md5'),
+            pwd = md5.update(req.body.pwd).digest('hex');
+        //
+        User.get(req.body.name, (err, user)=>{
+            if(!user){
+                console.log("error: 用戶不存在");
+                req.flash('error', '用戶不存在');
+                message = "error: 用戶不存在";
+                return res.redirect('/');
+            }
+            if(user.password != pwd){
+                console.log("error: 密碼錯誤");
+                req.flash('error', '密碼錯誤');
+                message = "error: 密碼錯誤";
+                return res.redirect('/');
+            }
+            req.session.user = user;
+            req.flash('info', '登錄成功!');
+            message = "success: 登錄成功 !";
+            io.sockets.on('connection', (socket)=>{
+                socket.emit('msg', message);
+            });
+            res.redirect('/home');
+        });
+    })
     
     app.get('/reg', (req, res)=>{
         res.render('reg', {
@@ -23,6 +51,9 @@ module.exports = (app, io) => {
             pwd_re = req.body['pwd-re'];
         if(pwd != pwd_re){
             req.flash('error', '兩次輸入不一樣!');
+            io.sockets.on('connection', (socket)=>{
+                socket.emit('msg', 'error: 兩次輸入不一樣');
+            });
             return res.redirect('/reg');
         }
         //建立密碼md5值
@@ -36,6 +67,9 @@ module.exports = (app, io) => {
         User.get(newUser.name, (err, user)=>{
             if(user){
                 req.flash('error', '用戶已存在!');
+                io.sockets.on('connection', (socket)=>{
+                    socket.emit('msg', 'error: 用戶已存在 !');
+                });
                 return res.redirect('/reg');
             }
             //若不存在則新增用戶
@@ -46,49 +80,14 @@ module.exports = (app, io) => {
                 //用戶資訊存入session
                 req.session.user = user;
                 req.flash('info', '註冊成功!');
+                io.sockets.on('connection', (socket)=>{
+                    socket.emit('msg', 'success: 註冊成功 !');
+                });
                 res.redirect('/');
             });
         });
     })
-    
-    app.get('/login', (req, res)=>{
-        res.render('login', {
-            title: 'Login'
-        });
-    })
-    
-    app.post('/login', (req, res)=>{
-        var name = req.body.name,
-            md5 = crypto.createHash('md5'),
-            pwd = md5.update(req.body.pwd).digest('hex');
-        //
-        User.get(req.body.name, (err, user)=>{
-            if(!user){
-                console.log("error: 用戶不存在");
-                req.flash('error', '用戶不存在');
-                io.sockets.on('connection', (socket)=>{
-                    socket.emit('login_alert', 'error: 用戶不存在');
-                });
-                return res.redirect('/login');
-            }
-            if(user.password != pwd){
-                console.log("error: 密碼錯誤");
-                req.flash('error', '密碼錯誤');
-                io.sockets.on('connection', (socket)=>{
-                    socket.emit('login_alert', 'error: 密碼錯誤');
-                });
-                return res.redirect('/login');
-            }
-            req.session.user = user;
-            req.flash('info', '登錄成功!');
-            io.sockets.on('connection', (socket)=>{
-                socket.emit('login_alert', 'success: 登錄成功 !');
-            });
-            res.redirect('/home');
-        })
-    
-    })
-    
+
     app.get('/logout', (req, res)=>{})
     
     app.get('/home', (req, res)=>{

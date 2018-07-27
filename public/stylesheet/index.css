@@ -1,0 +1,43 @@
+body{
+    background-color: gray; 
+}
+
+#title{
+    text-align: center;
+}
+
+#header{
+    height: 80px;
+}
+
+.panel-heading{
+    text-align: center;
+}
+
+.panel-body{
+    margin: 0px, 10px, 5px, 10px;
+}
+
+.panel-footer{
+    text-align: center;
+}
+
+.panel{
+    background-color: lightgray;
+    width: 350px;
+    margin: auto;
+}
+
+.form{
+    margin: 0px;
+}
+
+.btn{
+    width: 318px;
+    color: white;
+    background-color: mediumseagreen;
+    text-align: center;
+    margin: auto;
+}
+
+
